@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Ritual Quiz Master</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #0f172a, #1e293b);
+      color: #e2e8f0;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 700px;
+      margin: auto;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+      color: #38bdf8;
+      margin-bottom: 20px;
+    }
+    .welcome, .quiz, .result {
+      display: none;
+      text-align: center;
+    }
+    .active {
+      display: block;
+    }
+    .question {
+      margin-bottom: 20px;
+      padding: 15px;
+      border-radius: 8px;
+      background: #0f172a;
+      text-align: left;
+    }
+    .options label {
+      display: block;
+      margin: 8px 0;
+      padding: 10px;
+      background: #334155;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .options input {
+      display: none;
+    }
+    .options label:hover {
+      background: #475569;
+    }
+    .correct {
+      background: #15803d !important;
+      color: #fff;
+    }
+    .wrong {
+      background: #b91c1c !important;
+      color: #fff;
+    }
+    button {
+      margin-top: 20px;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 8px;
+      background: #2563eb;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #1d4ed8;
+    }
+    #score {
+      font-size: 18px;
+      margin-top: 15px;
+      font-weight: bold;
+      color: #facc15;
+    }
+    #timer {
+      font-size: 18px;
+      margin-top: 10px;
+      color: #f87171;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Welcome Screen -->
+    <div id="welcome" class="welcome active">
+      <h1>🔥 Welcome to Ritual Quiz Master 🔥</h1>
+      <p>Test your knowledge about the Ritual Blockchain!</p>
+      <button onclick="startQuiz()">Start Quiz</button>
+    </div>
+
+    <!-- Quiz Section -->
+    <div id="quiz" class="quiz">
+      <h1>Ritual Quiz</h1>
+      <div id="timer">Time Left: 60s</div>
+      <div id="quizContent"></div>
+      <div id="score">Score: 0</div>
+      <button onclick="finishQuiz()">Finish Quiz</button>
+    </div>
+
+    <!-- Result Screen -->
+    <div id="result" class="result">
+      <h1>Quiz Completed 🎉</h1>
+      <h2 id="finalScore"></h2>
+      <button onclick="restartQuiz()">Play Again</button>
+    </div>
+  </div>
+
+  <script>
+    const quizData = [
+      {
+        question: "What is the main vision of the Ritual blockchain?",
+        options: ["To only provide faster transactions", "To only build an AI marketplace", "To unlock new trustless behaviors for on-chain users", "To replace Bitcoin"],
+        answer: 2
+      },
+      {
+        question: "What role does Resonance play in Ritual?",
+        options: ["It is a storage system", "It is an AI training engine", "It balances transaction fees through supply-demand matching", "It is a staking tool for validators"],
+        answer: 2
+      },
+      {
+        question: "Which of the following innovations are introduced by Ritual?",
+        options: ["Enshrined On-Chain AI Models", "Scheduled Transactions", "Native Account Abstraction", "All of the above"],
+        answer: 3
+      },
+      {
+        question: "Why does Ritual argue that AI should be on-chain?",
+        options: ["To reduce gas fees for inference", "For transparency, censorship resistance, and open access", "To simplify enterprise-only use cases", "For gaming purposes only"],
+        answer: 1
+      },
+      {
+        question: "What does EVM++ Extensions mean in Ritual?",
+        options: ["A completely separate blockchain from Ethereum", "A hardware extension for nodes", "Direct integration of in-demand Ethereum Improvement Proposals (EIPs)", "Blocking smart contracts"],
+        answer: 2
+      },
+      {
+        question: "What does the feature Scheduled Transactions provide in Ritual?",
+        options: ["Auto-deletion of transaction history", "Recurring and conditional transactions without external keepers", "Faster token staking", "Cross-chain swaps"],
+        answer: 1
+      }
+    ];
+
+    let score = 0;
+    let timeLeft = 60;
+    let timerInterval;
+
+    function startQuiz() {
+      document.getElementById("welcome").classList.remove("active");
+      document.getElementById("quiz").classList.add("active");
+
+      const quizContent = document.getElementById("quizContent");
+      quizContent.innerHTML = "";
+
+      quizData.forEach((q, index) => {
+        const div = document.createElement("div");
+        div.className = "question";
+        div.innerHTML = `<p><b>Q${index + 1}. ${q.question}</b></p>` +
+          `<div class="options">` +
+          q.options.map((opt, i) =>
+            `<label><input type="radio" name="q${index}" value="${i}" onchange="checkAnswer(${index}, ${i}, this)"> ${opt}</label>`
+          ).join("") +
+          `</div>`;
+        quizContent.appendChild(div);
+      });
+
+      // Start Timer
+      timeLeft = 60;
+      document.getElementById("timer").innerText = `Time Left: ${timeLeft}s`;
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        document.getElementById("timer").innerText = `Time Left: ${timeLeft}s`;
+        if (timeLeft <= 0) {
+          clearInterval(timerInterval);
+          finishQuiz();
+        }
+      }, 1000);
+    }
+
+    function checkAnswer(questionIndex, selectedIndex, inputElement) {
+      const question = quizData[questionIndex];
+      const options = document.getElementsByName(`q${questionIndex}`);
+
+      options.forEach((opt, i) => {
+        const label = opt.parentNode;
+        label.classList.remove("correct", "wrong");
+        opt.disabled = true; // lock after choosing
+        if (i === question.answer) {
+          label.classList.add("correct");
+        }
+        if (i === selectedIndex && i !== question.answer) {
+          label.classList.add("wrong");
+        }
+      });
+
+      if (selectedIndex === question.answer) {
+        score++;
+        document.getElementById("score").innerText = `Score: ${score}`;
+      }
+    }
+
+    function finishQuiz() {
+      clearInterval(timerInterval);
+      document.getElementById("quiz").classList.remove("active");
+      document.getElementById("result").classList.add("active");
+      document.getElementById("finalScore").innerText = `Your Final Score: ${score} / ${quizData.length}`;
+    }
+
+    function restartQuiz() {
+      score = 0;
+      clearInterval(timerInterval);
+      document.getElementById("result").classList.remove("active");
+      document.getElementById("welcome").classList.add("active");
+    }
+  </script>
+</body>
+</html>
